@@ -1,0 +1,34 @@
+{
+    "name": "saeidsharafi/laravel-sms",
+    "description": "notification channel for sending sms.",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "sms"
+    ],
+    "authors": [
+        {
+            "name": "Saeid Sharafi",
+            "email": "saeid_sharafi12@yahoo.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "SaeidSharafi\\LaravelSms\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SaeidSharafi\\LaravelSms\\Providers\\SmsServiceProvider"
+            ],
+            "aliases": {
+                "Sms": "SaeidSharafi\\LaravelSms\\Facade\\Sms"
+            }
+        }
+    },
+    "minimum-stability": "dev"
+}
