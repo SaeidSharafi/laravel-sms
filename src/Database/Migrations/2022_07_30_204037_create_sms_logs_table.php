@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('from');
             $table->string('to');
             $table->string('pattern')->nullable();
-            $table->string('content')->nullable();
+            $table->text('content')->nullable();
             $table->timestamps();
         });
     }
