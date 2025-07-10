@@ -5,6 +5,7 @@ namespace SaeidSharafi\LaravelSms;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 use SaeidSharafi\LaravelSms\Exceptions\CouldNotUseNotification;
 
 class SmsChannel
@@ -30,10 +31,10 @@ class SmsChannel
             if ($sms = $notification->toSms($notifiable)) {
                 try {
                     if (config(('app.debug'))) {
-                        \Log::info(print_r($sms, true));
+                        Log::info(print_r($sms, true));
                     }
                     $result = $sms->send();
-                    \Log::info("SMS result: ".$result);
+                    Log::info("SMS result: ".$result);
                     return $result;
                 } catch (\Exception $e) {
                     $this->events->dispatch(new NotificationFailed($notifiable,

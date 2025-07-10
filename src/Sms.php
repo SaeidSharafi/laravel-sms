@@ -8,7 +8,7 @@
 
 namespace SaeidSharafi\LaravelSms;
 
-use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 use SaeidSharafi\LaravelSms\Gateways\GatewayAbstract;
 use SaeidSharafi\LaravelSms\Gateways\MelipayamakGateway;
 use SaeidSharafi\LaravelSms\Gateways\RangineGateway;
@@ -33,6 +33,11 @@ class Sms
      * @var string
      */
     public $password;
+
+    /**
+     * Api key of SMS provider
+     */
+    public $apiKey;
 
     /**
      * Array of numbers which sms will be sent to
@@ -92,6 +97,12 @@ class Sms
     protected $gateway;
 
     /**
+     * message
+     *
+     */
+    public $message;
+
+    /**
      * Sms constructor.
      *
      * @param  string  $gateway
@@ -110,14 +121,13 @@ class Sms
         if (!$defaultGateway) {
             $defaultGateway = config('sms.default');
         }
-        \Log::info("Initializing Gateways");
+        Log::info("Initializing Gateways");
         switch ($defaultGateway) {
             case 'melipayamak':
                 $this->gateway = new MelipayamakGateway($this);
                 break;
             case 'rangine':
             default:
-
                 $this->gateway = new RangineGateway($this);
                 break;
         }
@@ -163,7 +173,7 @@ class Sms
     public function to(array $numbers): Sms
     {
         $this->to = $numbers;
-        \Log::info("Sending Sms to".implode(",", $numbers));
+        Log::info("Sending Sms to".implode(",", $numbers));
         return $this;
     }
 
@@ -233,26 +243,31 @@ class Sms
     {
 
         if ($this->dry_run || config('sms.sandbox')) {
-            \Log::info("Sending [".implode($this->parameters)."] sms to [".implode(",", $this->to)."]");
+            $to = !is_array($this->to) ?: implode(",", $this->to);
+            $parameters = !is_array($this->parameters) ?: implode(",", $this->parameters);
+            Log::info("Sending [".$parameters."] sms to [".$to."]");
             $response = random_int(100000,999999);
-            $log = SmsLog::create([
-                'response' => $response,
-                'from'     => $this->gateway->from,
-                'to'       => implode(",", $this->gateway->to),
-                'pattern'  => $this->pattern,
-                'content'  => $this->getContent()
-            ]);
+            if (!app()->runningUnitTests()){
+                $log = SmsLog::create([
+                    'response' => $response,
+                    'from'     => $this->gateway->from,
+                    'to'       => $to,
+                    'pattern'  => $this->pattern,
+                    'content'  => $this->getContent()
+                ]);
+            }
+
             return "Simualted Sms Sending";
         }
         if ($this->pattern) {
-            \Log::info("Sending [".$this->pattern."] sms to [".implode(",", $this->to)."]");
+            Log::info("Sending [".$this->pattern."] sms to [".implode(",", $this->to)."]");
             $response = $this->gateway->sendPatternSms();
 
         } else {
             $response = $this->gateway->sendSms();
         }
 
-        if (isset($response)) {
+        if (isset($response) && !app()->runningUnitTests()) {
             $log = SmsLog::create([
                 'response' => $response,
                 'from'     => $this->gateway->from,

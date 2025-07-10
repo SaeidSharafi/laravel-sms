@@ -12,9 +12,8 @@ return [
         ],
         'rangine'     => [
             'website'    => 'https://sms.rangine.ir/',
-            'webService' => 'http://ippanel.com/class/sms/wsdlservice/server.php?wsdl',
-            'username'   => env('SMS_USERNAME', 'username'),
-            'password'   => env('SMS_PASSWORD', 'password'),
+            'webService' => 'https://api2.ippanel.com/api/v1',
+            'apiKey'     => env('SMS_API_KEY', ''),
             'from'       => env('SMS_FROM', '5000 '),
         ],
     ],

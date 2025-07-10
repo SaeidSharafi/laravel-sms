@@ -18,6 +18,7 @@ abstract class GatewayAbstract extends Sms implements GatewayInterface
         parent::__construct();
         $this->username = $sms->username;
         $this->password = $sms->password;
+        $this->apiKey = $sms->apiKey;
         $this->message = $sms->getContent();
         $this->to = $sms->to;
         $this->pattern = $sms->pattern;

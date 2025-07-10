@@ -2,6 +2,9 @@
 
 namespace SaeidSharafi\LaravelSms\Gateways;
 
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use SaeidSharafi\LaravelSms\Exceptions\CouldNotSendNotification;
 use SaeidSharafi\LaravelSms\Sms;
 
@@ -11,10 +14,8 @@ class RangineGateway extends GatewayAbstract
     {
         parent::__construct($sms);
         $this->webService = config('sms.gateway.rangine.webService');
-        $this->username = $this->username ?: config('sms.gateway.rangine.username');
-        $this->password = $this->password ?: config('sms.gateway.rangine.password');
-        $this->from = $this->from     ?: config('sms.gateway.rangine.from');
-
+        $this->apiKey = $sms->apiKey ?: config('sms.gateway.rangine.apiKey');
+        $this->from = $sms->from ?: config('sms.gateway.rangine.from');
     }
 
     /**
@@ -23,20 +24,30 @@ class RangineGateway extends GatewayAbstract
     public function sendSms()
     {
         try {
-            return (new \SoapClient($this->webService))->SendSms(
-                $this->from,
-                $this->to,
-                $this->message,
-                $this->username,
-                $this->password,
-                '',
-                'send'
-            );
-
-        } catch (SoapFault $ex) {
+            $response = Http::baseUrl($this->webService)
+                ->withHeaders([
+                    'apikey' => $this->apiKey,
+                ])
+                ->post(
+                    '/sms/send/webservice/single',
+                    [
+                        'sender'    => $this->from,
+                        'recipient' => $this->to,
+                        'message'   => $this->message,
+                    ]
+                );
+            if ($response->ok()) {
+                return $response->json('data.message_id');
+            }
+            if ($response->failed()) {
+                Log::error("Rangine Gateway Error ({$response->status()}): ".json_encode($response->json()));
+                return null;
+            }
+            return null;
+        } catch (RequestException $exception) {
             throw CouldNotSendNotification::serviceRespondedWithAnError(
-                $ex->getMessage(),
-                $ex->getCode()
+                $exception->getMessage(),
+                $exception->getCode()
             );
         }
     }
@@ -53,26 +64,37 @@ class RangineGateway extends GatewayAbstract
     {
         try {
             if (config(('app.debug'))) {
-                \Log::info("sending sms with from :".$this->from);
-                \Log::info("sending sms with to :".implode(",", $this->to));
-                \Log::info("sending sms with username :".$this->username);
-                \Log::info("sending sms with password :".$this->password);
-                \Log::info("sending sms with pattern :".$this->pattern);
-                \Log::info("sending sms with parameters :".implode(",", $this->parameters));
+                Log::info("sending sms with from :".$this->from);
+                Log::info("sending sms with to :".implode(",", $this->to));
+                Log::info("sending sms with apiKey :".$this->apiKey);
+                Log::info("sending sms with pattern :".$this->pattern);
+                Log::info("sending sms with parameters :".implode(",", $this->parameters));
             }
-            return (new \SoapClient($this->webService))->sendPatternSms(
-                $this->from,
-                $this->to,
-                $this->username,
-                $this->password,
-                $this->pattern,
-                $this->parameters
-            );
-        } catch (SoapFault $ex) {
-            \Log::error("error sending sms with rangine:",$ex);
+            $response = Http::baseUrl($this->webService)
+                ->withHeaders([
+                    'apikey' => $this->apiKey,
+                ])
+                ->post(
+                    '/sms/pattern/normal/send',
+                    [
+                        'code'    => $this->pattern,
+                        'sender'    => $this->from,
+                        'recipient' => $this->to[0] ?? null,
+                        'variable'   => $this->parameters,
+                    ]
+                );
+            if ($response->ok()) {
+                return $response->json('data.message_id');
+            }
+            if ($response->failed()) {
+                Log::error("Rangine Gateway Error ({$response->status()}): ".json_encode($response->json()));
+                return null;
+            }
+            return null;
+        } catch (RequestException $exception) {
             throw CouldNotSendNotification::serviceRespondedWithAnError(
-                $ex->getMessage(),
-                $ex->getCode()
+                $exception->getMessage(),
+                $exception->getCode()
             );
         }
     }
