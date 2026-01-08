@@ -40,7 +40,7 @@ class RangineGateway extends GatewayAbstract
                 return $response->json('data.message_id');
             }
             if ($response->failed()) {
-                Log::error("Rangine Gateway Error ({$response->status()}): ".json_encode($response->json()));
+                Log::error("Rangine Gateway Error Single SMS, to: {$this->to}, Message: {$this->message} | response: " .json_encode($response->json()));
                 return null;
             }
             return null;
@@ -87,7 +87,7 @@ class RangineGateway extends GatewayAbstract
                 return $response->json('data.message_id');
             }
             if ($response->failed()) {
-                Log::error("Rangine Gateway Error (pattern: {$this->pattern})  ({$response->status()}) parameters :".implode(",", $this->parameters) . " response: " .json_encode($response->json()));
+                Log::error("Rangine Gateway Error (pattern: {$this->pattern}),to: {$this->to}, Status: ({$response->status()}), parameters :".implode(",", $this->parameters) . " response: " .json_encode($response->json()));
                 return null;
             }
             return null;
